@@ -58,6 +58,7 @@ body {
 /* Sidebar */
 .sidebar {
     min-height: 100vh;
+    max-height: 100vh;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     position: fixed;
     top: 0;
@@ -66,31 +67,37 @@ body {
     width: 250px;
     overflow-y: auto;
     overflow-x: hidden;
+    padding-bottom: 20px;
 }
 
-/* Barra de rolagem personalizada para a sidebar */
+/* Barra de rolagem personalizada para a sidebar - Chrome/Edge/Safari */
 .sidebar::-webkit-scrollbar {
-    width: 6px;
+    width: 10px;
 }
 
 .sidebar::-webkit-scrollbar-track {
     background: rgba(255, 255, 255, 0.1);
-    border-radius: 3px;
+    border-radius: 5px;
+    margin: 5px 0;
 }
 
 .sidebar::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.3);
-    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.4);
+    border-radius: 5px;
+    border: 2px solid transparent;
+    background-clip: content-box;
 }
 
 .sidebar::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.5);
+    background: rgba(255, 255, 255, 0.6);
+    border: 2px solid transparent;
+    background-clip: content-box;
 }
 
 /* Para navegadores Firefox */
 .sidebar {
     scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.3) rgba(255, 255, 255, 0.1);
+    scrollbar-color: rgba(255, 255, 255, 0.4) rgba(255, 255, 255, 0.1);
 }
 
 .sidebar .nav-link {
