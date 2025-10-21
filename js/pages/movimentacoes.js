@@ -59,6 +59,18 @@ class MovimentacoesPage {
 
     render() {
         const content = `
+            ${authManager.hasPermission('editar') ? `
+            <div class="alert alert-info alert-dismissible fade show" role="alert">
+                <i class="fas fa-info-circle me-2"></i>
+                <strong>Edição de Movimentações:</strong>
+                ${authManager.isAdmin() ? 
+                    'Você é administrador e pode editar qualquer movimentação.' : 
+                    'Você pode editar movimentações dos últimos 30 dias. Movimentações mais antigas são protegidas por questões de auditoria.'
+                }
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            ` : ''}
+            
             <!-- Filtros -->
             <div class="row mb-3">
                 <div class="col-md-3">
@@ -161,7 +173,12 @@ class MovimentacoesPage {
 
         console.log('Renderizando', this.movimentacoes.length, 'linhas de movimentações');
 
-        return this.movimentacoes.map(mov => `
+        return this.movimentacoes.map(mov => {
+            const canEdit = this.canEditMovimentacao(mov);
+            const hasEditPermission = authManager.hasPermission('editar');
+            const isAdmin = authManager.isAdmin();
+            
+            return `
             <tr>
                 <td>${Utils.formatDate(mov.data, true)}</td>
                 <td>
@@ -197,14 +214,19 @@ class MovimentacoesPage {
                                 title="Visualizar">
                             <i class="fas fa-eye"></i>
                         </button>
-                        ${authManager.hasPermission('editar') ? `
+                        ${canEdit ? `
                         <button type="button" class="btn btn-outline-warning btn-sm" 
                                 onclick="movimentacoesPage.editMovimentacao('${mov.id}')" 
                                 title="Editar">
                             <i class="fas fa-edit"></i>
                         </button>
+                        ` : hasEditPermission ? `
+                        <button type="button" class="btn btn-outline-secondary btn-sm disabled" 
+                                title="Não é possível editar movimentações antigas (mais de 30 dias)">
+                            <i class="fas fa-lock"></i>
+                        </button>
                         ` : ''}
-                        ${authManager.isAdmin() ? `
+                        ${isAdmin ? `
                         <button type="button" class="btn btn-outline-danger btn-sm" 
                                 onclick="movimentacoesPage.deleteMovimentacao('${mov.id}')" 
                                 title="Excluir">
@@ -214,7 +236,8 @@ class MovimentacoesPage {
                     </div>
                 </td>
             </tr>
-        `).join('');
+        `;
+        }).join('');
     }
 
     setupEventListeners() {
@@ -458,7 +481,7 @@ class MovimentacoesPage {
             {
                 text: isEdit ? 'Atualizar' : 'Salvar',
                 class: 'primary',
-                action: `movimentacoesPage.${isEdit ? 'updateMovimentacao' : 'saveMovimentacao'}('${movimentacao ? movimentacao.id : ''}')`
+                action: isEdit ? `movimentacoesPage.saveMovimentacaoUpdate('${movimentacao.id}')` : 'movimentacoesPage.saveMovimentacao()'
             }
         ];
 
@@ -525,9 +548,112 @@ class MovimentacoesPage {
         }
     }
 
-    updateMovimentacao(movimentacaoId) {
-        // Por segurança, não permitir edição de movimentações já processadas
-        Utils.showMessage('Edição de movimentações não permitida por questões de auditoria', 'warning');
+    canEditMovimentacao(movimentacao) {
+        // Verificar se o usuário tem permissão para editar
+        if (!authManager.hasPermission('editar')) {
+            return false;
+        }
+        
+        // Permitir edição apenas para admin ou se a movimentação for recente (últimos 30 dias)
+        if (authManager.isAdmin()) {
+            return true;
+        }
+        
+        // Verificar se a movimentação é recente (últimos 30 dias)
+        const agora = new Date();
+        const dataMovimentacao = new Date(movimentacao.data);
+        const diasDiferenca = (agora - dataMovimentacao) / (1000 * 60 * 60 * 24);
+        
+        return diasDiferenca <= 30;
+    }
+
+    async updateMovimentacao(movimentacaoId) {
+        const movimentacao = this.movimentacoes.find(m => m.id === movimentacaoId);
+        if (!movimentacao) {
+            Utils.showMessage('Movimentação não encontrada', 'error');
+            return;
+        }
+        
+        // Verificar se pode editar
+        if (!this.canEditMovimentacao(movimentacao)) {
+            if (!authManager.hasPermission('editar')) {
+                Utils.showMessage('Você não tem permissão para editar movimentações', 'warning');
+            } else {
+                Utils.showMessage('Esta movimentação não pode ser editada por questões de auditoria (mais de 30 dias)', 'warning');
+            }
+            return;
+        }
+        
+        // Mostrar aviso sobre impacto no estoque
+        const confirmacao = confirm(
+            'ATENÇÃO: Editar esta movimentação irá recalcular automaticamente o estoque.\n\n' +
+            'Isso pode afetar:\n' +
+            '• Quantidades em estoque\n' +
+            '• Histórico de movimentação\n\n' +
+            'Tem certeza que deseja continuar?'
+        );
+        
+        if (!confirmacao) {
+            return;
+        }
+        
+        // Abrir modal de edição
+        try {
+            await this.loadMovimentacaoForEdit(movimentacaoId);
+        } catch (error) {
+            console.error('Erro ao carregar movimentação para edição:', error);
+            Utils.showMessage('Erro ao carregar movimentação', 'error');
+        }
+    }
+
+    async saveMovimentacaoUpdate(movimentacaoId) {
+        try {
+            if (!Utils.validateForm('movimentacaoForm')) {
+                Utils.showMessage('Por favor, preencha todos os campos obrigatórios', 'warning');
+                return;
+            }
+
+            const movimentacaoOriginal = this.movimentacoes.find(m => m.id === movimentacaoId);
+            if (!movimentacaoOriginal) {
+                Utils.showMessage('Movimentação original não encontrada', 'error');
+                return;
+            }
+
+            const movimentacaoData = {
+                data: new Date(document.getElementById('data').value),
+                entrada_saida: document.getElementById('entrada_saida').value,
+                produto_id: document.getElementById('produto_id').value,
+                quantidade: parseFloat(document.getElementById('quantidade').value),
+                localizacao_id: document.getElementById('localizacao_id').value,
+                projeto_id: document.getElementById('projeto_id').value || null,
+                lote: document.getElementById('lote').value.trim() || null,
+                variante: document.getElementById('variante').value.trim() || null,
+                tamanho: document.getElementById('tamanho').value.trim() || null,
+                data_vencimento: document.getElementById('data_vencimento').value ? new Date(document.getElementById('data_vencimento').value) : null,
+                observacoes: document.getElementById('observacoes').value.trim() || null,
+                usuario_atualizacao: authManager.currentUser?.uid || null
+            };
+
+            await databaseManager.updateMovimentacao(movimentacaoId, movimentacaoData, movimentacaoOriginal);
+            Utils.showMessage('Movimentação atualizada com sucesso!', 'success');
+            
+            // Recarregar página
+            await this.loadMovimentacoes();
+            this.updateTable();
+            
+            // Fechar modal
+            const modal = document.querySelector('.modal');
+            if (modal) {
+                const modalInstance = bootstrap.Modal.getInstance(modal);
+                if (modalInstance) {
+                    modalInstance.hide();
+                }
+            }
+            
+        } catch (error) {
+            console.error('Erro ao atualizar movimentação:', error);
+            Utils.showMessage('Erro ao atualizar movimentação: ' + error, 'error');
+        }
     }
 
     deleteMovimentacao(movimentacaoId) {
