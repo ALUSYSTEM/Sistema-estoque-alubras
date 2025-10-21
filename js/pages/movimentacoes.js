@@ -215,8 +215,8 @@ class MovimentacoesPage {
                             <i class="fas fa-eye"></i>
                         </button>
                         ${canEdit ? `
-                        <button type="button" class="btn btn-outline-warning btn-sm" 
-                                onclick="movimentacoesPage.editMovimentacao('${mov.id}')" 
+                        <button type="button" class="btn btn-outline-warning btn-sm edit-mov-btn" 
+                                data-mov-id="${mov.id}"
                                 title="Editar">
                             <i class="fas fa-edit"></i>
                         </button>
@@ -266,6 +266,17 @@ class MovimentacoesPage {
                 this.load();
             });
         }
+
+        // Event listener para botões de edição (usando event delegation)
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.edit-mov-btn')) {
+                const button = e.target.closest('.edit-mov-btn');
+                const movId = button.getAttribute('data-mov-id');
+                if (movId) {
+                    this.editMovimentacao(movId);
+                }
+            }
+        });
     }
 
     filterMovimentacoes(searchTerm) {
@@ -329,10 +340,17 @@ class MovimentacoesPage {
 
     async loadMovimentacaoForEdit(movimentacaoId) {
         try {
+            console.log('Buscando movimentação para edição:', movimentacaoId);
+            console.log('Movimentações disponíveis:', this.movimentacoes.length);
+            
             // Buscar movimentação específica
             const movimentacao = this.movimentacoes.find(m => m.id === movimentacaoId);
             if (movimentacao) {
+                console.log('Movimentação encontrada:', movimentacao);
                 this.renderMovimentacaoModal(movimentacao);
+            } else {
+                console.error('Movimentação não encontrada:', movimentacaoId);
+                Utils.showMessage('Movimentação não encontrada', 'error');
             }
         } catch (error) {
             console.error('Erro ao carregar movimentação:', error);
@@ -568,9 +586,21 @@ class MovimentacoesPage {
     }
 
     async updateMovimentacao(movimentacaoId) {
+        console.log('updateMovimentacao chamada com ID:', movimentacaoId);
+        console.log('Movimentações carregadas:', this.movimentacoes.length);
+        console.log('IDs das movimentações:', this.movimentacoes.map(m => m.id));
+        
+        // Garantir que as movimentações estão carregadas
+        if (this.movimentacoes.length === 0) {
+            console.log('Movimentações não carregadas, tentando recarregar...');
+            await this.loadMovimentacoes();
+        }
+        
         const movimentacao = this.movimentacoes.find(m => m.id === movimentacaoId);
         if (!movimentacao) {
-            Utils.showMessage('Movimentação não encontrada', 'error');
+            console.error('Movimentação não encontrada com ID:', movimentacaoId);
+            console.log('Movimentações disponíveis:', this.movimentacoes);
+            Utils.showMessage('Movimentação não encontrada. Tente recarregar a página.', 'error');
             return;
         }
         
