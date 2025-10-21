@@ -386,57 +386,36 @@ class UsuariosPage {
         ];
 
         Utils.showModal(title, content, actions);
-        
-        // Adicionar validação em tempo real para senhas
-        setTimeout(() => {
-            const passwordField = document.getElementById('password');
-            const confirmPasswordField = document.getElementById('confirmPassword');
-            
-            if (passwordField && confirmPasswordField) {
-                const validatePasswords = () => {
-                    const password = passwordField.value.trim();
-                    const confirmPassword = confirmPasswordField.value.trim();
-                    
-                    if (password && confirmPassword) {
-                        if (password !== confirmPassword) {
-                            passwordField.classList.add('is-invalid');
-                            confirmPasswordField.classList.add('is-invalid');
-                            passwordField.classList.remove('is-valid');
-                            confirmPasswordField.classList.remove('is-valid');
-                        } else {
-                            passwordField.classList.remove('is-invalid');
-                            confirmPasswordField.classList.remove('is-invalid');
-                            passwordField.classList.add('is-valid');
-                            confirmPasswordField.classList.add('is-valid');
-                        }
-                    }
-                };
-                
-                passwordField.addEventListener('input', validatePasswords);
-                confirmPasswordField.addEventListener('input', validatePasswords);
-            }
-        }, 100);
     }
 
     async saveUsuario() {
         try {
-            if (!Utils.validateForm('usuarioForm')) {
+            // Pegar valores dos campos ANTES da validação do formulário
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const confirmPassword = document.getElementById('confirmPassword').value.trim();
+            const nome = document.getElementById('nome').value.trim();
+
+            // Debug: Log dos valores das senhas ANTES de qualquer validação
+            console.log('=== DEBUG CADASTRO USUÁRIO ===');
+            console.log('Email:', email);
+            console.log('Nome:', nome);
+            console.log('Senha (original):', document.getElementById('password').value);
+            console.log('Senha (após trim):', password);
+            console.log('Confirmar Senha (original):', document.getElementById('confirmPassword').value);
+            console.log('Confirmar Senha (após trim):', confirmPassword);
+            console.log('Senhas são iguais:', password === confirmPassword);
+            console.log('Tamanho da senha:', password.length);
+            console.log('Tamanho da confirmação:', confirmPassword.length);
+            console.log('==============================');
+
+            // Validar campos obrigatórios
+            if (!email || !nome) {
                 Utils.showMessage('Por favor, preencha todos os campos obrigatórios', 'warning');
                 return;
             }
 
-            const email = document.getElementById('email').value.trim();
-            const password = document.getElementById('password').value.trim();
-            const confirmPassword = document.getElementById('confirmPassword').value.trim();
-
-            // Debug: Log dos valores das senhas
-            console.log('Senha:', password);
-            console.log('Confirmar Senha:', confirmPassword);
-            console.log('Senhas são iguais:', password === confirmPassword);
-            console.log('Tamanho da senha:', password.length);
-            console.log('Tamanho da confirmação:', confirmPassword.length);
-
-            // Validação mais robusta das senhas
+            // Validação das senhas
             if (!password || !confirmPassword) {
                 Utils.showMessage('Por favor, preencha ambos os campos de senha', 'warning');
                 return;
@@ -453,7 +432,7 @@ class UsuariosPage {
             }
 
             const usuarioData = {
-                nome: document.getElementById('nome').value.trim(),
+                nome: nome,
                 role: document.getElementById('role').value,
                 permissoes: {
                     criar: document.getElementById('permissao_criar').checked,
