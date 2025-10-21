@@ -386,6 +386,36 @@ class UsuariosPage {
         ];
 
         Utils.showModal(title, content, actions);
+        
+        // Adicionar validação em tempo real para senhas
+        setTimeout(() => {
+            const passwordField = document.getElementById('password');
+            const confirmPasswordField = document.getElementById('confirmPassword');
+            
+            if (passwordField && confirmPasswordField) {
+                const validatePasswords = () => {
+                    const password = passwordField.value.trim();
+                    const confirmPassword = confirmPasswordField.value.trim();
+                    
+                    if (password && confirmPassword) {
+                        if (password !== confirmPassword) {
+                            passwordField.classList.add('is-invalid');
+                            confirmPasswordField.classList.add('is-invalid');
+                            passwordField.classList.remove('is-valid');
+                            confirmPasswordField.classList.remove('is-valid');
+                        } else {
+                            passwordField.classList.remove('is-invalid');
+                            confirmPasswordField.classList.remove('is-invalid');
+                            passwordField.classList.add('is-valid');
+                            confirmPasswordField.classList.add('is-valid');
+                        }
+                    }
+                };
+                
+                passwordField.addEventListener('input', validatePasswords);
+                confirmPasswordField.addEventListener('input', validatePasswords);
+            }
+        }, 100);
     }
 
     async saveUsuario() {
@@ -395,12 +425,30 @@ class UsuariosPage {
                 return;
             }
 
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const confirmPassword = document.getElementById('confirmPassword').value.trim();
+
+            // Debug: Log dos valores das senhas
+            console.log('Senha:', password);
+            console.log('Confirmar Senha:', confirmPassword);
+            console.log('Senhas são iguais:', password === confirmPassword);
+            console.log('Tamanho da senha:', password.length);
+            console.log('Tamanho da confirmação:', confirmPassword.length);
+
+            // Validação mais robusta das senhas
+            if (!password || !confirmPassword) {
+                Utils.showMessage('Por favor, preencha ambos os campos de senha', 'warning');
+                return;
+            }
+
+            if (password.length < 6) {
+                Utils.showMessage('A senha deve ter pelo menos 6 caracteres', 'warning');
+                return;
+            }
 
             if (password !== confirmPassword) {
-                Utils.showMessage('As senhas não coincidem', 'warning');
+                Utils.showMessage('As senhas não coincidem. Verifique se digitou corretamente.', 'warning');
                 return;
             }
 
