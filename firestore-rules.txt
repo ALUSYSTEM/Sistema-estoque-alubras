@@ -1,0 +1,76 @@
+// Regras de segurança para Firestore Database
+// Cole este código no Firebase Console > Firestore Database > Rules
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Usuários - podem apenas ler/editar seus próprios dados
+    match /usuarios/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      // Admin pode ler todos os usuários
+      allow read: if request.auth != null && 
+        exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    // Produtos - autenticação necessária
+    match /produtos/{produtoId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && 
+        exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) &&
+        (get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.permissoes.criar == true ||
+         get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.role == 'admin');
+    }
+    
+    // Estoque - apenas leitura para usuários, escrita para editores+
+    match /estoque/{estoqueId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && 
+        exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) &&
+        (get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.permissoes.criar == true ||
+         get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.role == 'admin');
+    }
+    
+    // Movimentações - apenas leitura para usuários, escrita para editores+
+    match /movimentacoes/{movId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && 
+        exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) &&
+        (get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.permissoes.criar == true ||
+         get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.role == 'admin');
+    }
+    
+    // Localizações - autenticação necessária
+    match /localizacoes/{localId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && 
+        exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) &&
+        (get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.permissoes.criar == true ||
+         get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.role == 'admin');
+    }
+    
+    // Projetos - autenticação necessária
+    match /projetos/{projetoId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && 
+        exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) &&
+        (get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.permissoes.criar == true ||
+         get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.role == 'admin');
+    }
+    
+    // Beneficiamento - autenticação necessária
+    match /beneficiamento/{benId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && 
+        exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) &&
+        (get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.permissoes.editar == true ||
+         get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.role == 'admin');
+    }
+    
+    // Regra padrão - negar acesso a outras coleções
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
