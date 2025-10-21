@@ -386,6 +386,37 @@ class UsuariosPage {
         ];
 
         Utils.showModal(title, content, actions);
+        
+        // Adicionar validação em tempo real para senhas (sem interferir na validação principal)
+        setTimeout(() => {
+            const passwordField = document.getElementById('password');
+            const confirmPasswordField = document.getElementById('confirmPassword');
+            
+            if (passwordField && confirmPasswordField) {
+                const validatePasswords = () => {
+                    const password = passwordField.value.trim();
+                    const confirmPassword = confirmPasswordField.value.trim();
+                    
+                    // Só aplicar feedback visual se ambos os campos tiverem conteúdo
+                    if (password.length > 0 && confirmPassword.length > 0) {
+                        if (password !== confirmPassword) {
+                            passwordField.style.borderColor = '#dc3545';
+                            confirmPasswordField.style.borderColor = '#dc3545';
+                        } else {
+                            passwordField.style.borderColor = '#28a745';
+                            confirmPasswordField.style.borderColor = '#28a745';
+                        }
+                    } else {
+                        // Resetar cores quando campos estão vazios
+                        passwordField.style.borderColor = '';
+                        confirmPasswordField.style.borderColor = '';
+                    }
+                };
+                
+                passwordField.addEventListener('input', validatePasswords);
+                confirmPasswordField.addEventListener('input', validatePasswords);
+            }
+        }, 100);
     }
 
     async saveUsuario() {
