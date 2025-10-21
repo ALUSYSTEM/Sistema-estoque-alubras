@@ -389,6 +389,63 @@ class DatabaseManager {
         }
     }
 
+    async updateMovimentacao(movimentacaoId, movimentacaoData, movimentacaoOriginal) {
+        try {
+            console.log('Atualizando movimentação:', movimentacaoId);
+            
+            // Primeiro, reverter a movimentação original no estoque
+            if (movimentacaoOriginal) {
+                const quantidadeOriginal = movimentacaoOriginal.entrada_saida === 'ENTRADA' ? 
+                    -movimentacaoOriginal.quantidade : movimentacaoOriginal.quantidade;
+                
+                console.log('Revertendo movimentação original no estoque:', quantidadeOriginal);
+                
+                await this.updateEstoque(
+                    movimentacaoOriginal.produto_id,
+                    movimentacaoOriginal.localizacao_id,
+                    movimentacaoOriginal.projeto_id || null,
+                    movimentacaoOriginal.lote || null,
+                    movimentacaoOriginal.variante || null,
+                    movimentacaoOriginal.tamanho || null,
+                    quantidadeOriginal,
+                    movimentacaoOriginal.data_vencimento || null
+                );
+            }
+            
+            // Atualizar a movimentação no banco
+            await this.db.collection('movimentacoes').doc(movimentacaoId).update({
+                ...movimentacaoData,
+                data_atualizacao: firebase.firestore.FieldValue.serverTimestamp(),
+                usuario_atualizacao: authManager.currentUser?.uid || null
+            });
+            
+            console.log('Movimentação atualizada com ID:', movimentacaoId);
+            
+            // Aplicar nova movimentação no estoque
+            const quantidadeNova = movimentacaoData.entrada_saida === 'ENTRADA' ? 
+                movimentacaoData.quantidade : -movimentacaoData.quantidade;
+            
+            console.log('Aplicando nova movimentação no estoque:', quantidadeNova);
+            
+            await this.updateEstoque(
+                movimentacaoData.produto_id,
+                movimentacaoData.localizacao_id,
+                movimentacaoData.projeto_id || null,
+                movimentacaoData.lote || null,
+                movimentacaoData.variante || null,
+                movimentacaoData.tamanho || null,
+                quantidadeNova,
+                movimentacaoData.data_vencimento || null
+            );
+            
+            console.log('Estoque atualizado para movimentação atualizada:', movimentacaoId);
+            return movimentacaoId;
+        } catch (error) {
+            console.error('Erro ao atualizar movimentação:', error);
+            throw error;
+        }
+    }
+
     async clearAllMovimentacoes() {
         try {
             console.log('Iniciando limpeza de todas as movimentações...');
