@@ -51,18 +51,48 @@ class EstoquePage {
                     .filter(id => !!id)
             ));
             
+            console.log('=== DEBUG ESTOQUE ===');
+            console.log('Total de itens de estoque:', this.estoques.length);
+            console.log('IDs de produtos encontrados:', produtoIds);
+            console.log('Primeiros 3 itens de estoque:', this.estoques.slice(0, 3));
+            
             if (produtoIds.length > 0) {
                 try {
-                    const produtos = await databaseManager.getProdutosByIds(produtoIds);
+                    // Tentar primeiro com getProdutosByIds
+                    let produtos = await databaseManager.getProdutosByIds(produtoIds);
+                    console.log('Produtos carregados via getProdutosByIds:', produtos.length);
+                    
+                    // Se não encontrou produtos, tentar buscar todos e filtrar
+                    if (produtos.length === 0) {
+                        console.log('Tentando buscar todos os produtos e filtrar...');
+                        const todosProdutos = await databaseManager.getProdutos({ ativo: true });
+                        produtos = todosProdutos.filter(p => produtoIds.includes(p.id));
+                        console.log('Produtos encontrados via filtro:', produtos.length);
+                    }
+                    
+                    console.log('Primeiros 3 produtos:', produtos.slice(0, 3));
+                    
                     const produtoMap = new Map(produtos.map(p => [p.id, p]));
-                    this.estoques = this.estoques.map(e => ({
-                        ...e,
-                        produto: e.produto || produtoMap.get(e.produto_id) || e.produto
-                    }));
+                    this.estoques = this.estoques.map(e => {
+                        const produto = e.produto || produtoMap.get(e.produto_id);
+                        console.log(`Item ${e.id}: produto_id=${e.produto_id}, produto encontrado=`, !!produto);
+                        if (produto) {
+                            console.log(`  Produto encontrado: ${produto.codigo} - ${produto.descricao}`);
+                        }
+                        return {
+                            ...e,
+                            produto: produto || e.produto
+                        };
+                    });
+                    
+                    console.log('Estoques após merge:', this.estoques.slice(0, 3));
                 } catch (err) {
-                    console.warn('Aviso: falha ao anexar produtos ao estoque:', err);
+                    console.error('Erro ao anexar produtos ao estoque:', err);
                 }
+            } else {
+                console.log('Nenhum produto_id encontrado nos itens de estoque');
             }
+            console.log('========================');
             
             // Aplicar filtros específicos
             if (this.currentFilters.filtro === 'vencidos') {
