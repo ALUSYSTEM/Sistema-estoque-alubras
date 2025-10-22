@@ -44,6 +44,26 @@ class EstoquePage {
         try {
             this.estoques = await databaseManager.getEstoque(this.currentFilters);
             
+            // Anexar dados de produtos aos registros de estoque quando disponíveis
+            const produtoIds = Array.from(new Set(
+                (this.estoques || [])
+                    .map(e => e.produto_id)
+                    .filter(id => !!id)
+            ));
+            
+            if (produtoIds.length > 0) {
+                try {
+                    const produtos = await databaseManager.getProdutosByIds(produtoIds);
+                    const produtoMap = new Map(produtos.map(p => [p.id, p]));
+                    this.estoques = this.estoques.map(e => ({
+                        ...e,
+                        produto: e.produto || produtoMap.get(e.produto_id) || e.produto
+                    }));
+                } catch (err) {
+                    console.warn('Aviso: falha ao anexar produtos ao estoque:', err);
+                }
+            }
+            
             // Aplicar filtros específicos
             if (this.currentFilters.filtro === 'vencidos') {
                 this.estoques = this.estoques.filter(estoque => {
