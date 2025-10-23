@@ -49,7 +49,25 @@ class MovimentacoesPage {
             
             // Log detalhado das movimentações para debug
             if (this.movimentacoes.length > 0) {
-                console.log('Primeiras movimentações:', this.movimentacoes.slice(0, 3));
+                console.log('=== DEBUG CARREGAMENTO MOVIMENTAÇÕES ===');
+                console.log('Total de movimentações:', this.movimentacoes.length);
+                
+                // Verificar campos específicos nas primeiras 3 movimentações
+                this.movimentacoes.slice(0, 3).forEach((mov, index) => {
+                    console.log(`Movimentação ${index + 1}:`);
+                    console.log('  - ID:', mov.id);
+                    console.log('  - Lote:', mov.lote, '(tipo:', typeof mov.lote, ')');
+                    console.log('  - Projeto:', mov.projeto, '(tipo:', typeof mov.projeto, ')');
+                    console.log('  - Variante:', mov.variante, '(tipo:', typeof mov.variante, ')');
+                    console.log('  - Tamanho:', mov.tamanho, '(tipo:', typeof mov.tamanho, ')');
+                    console.log('  - Tipo Movimento:', mov.tipo_movimento, '(tipo:', typeof mov.tipo_movimento, ')');
+                    console.log('  - LIB:', mov.lib, '(tipo:', typeof mov.lib, ')');
+                    console.log('  - Destino:', mov.destino, '(tipo:', typeof mov.destino, ')');
+                    console.log('  - Data Vencimento:', mov.data_vencimento, '(tipo:', typeof mov.data_vencimento, ')');
+                    console.log('  - Observações:', mov.observacoes, '(tipo:', typeof mov.observacoes, ')');
+                    console.log('  - Objeto completo:', mov);
+                });
+                console.log('==========================================');
             }
         } catch (error) {
             console.error('Erro ao carregar movimentações:', error);
@@ -146,6 +164,15 @@ class MovimentacoesPage {
                                         <input type="number" class="form-control form-control-sm" id="filter-quantidade" placeholder="Qtd">
                                     </th>
                                     <th>
+                                        <input type="text" class="form-control form-control-sm" id="filter-variante" placeholder="Filtrar variante">
+                                    </th>
+                                    <th>
+                                        <input type="text" class="form-control form-control-sm" id="filter-tamanho" placeholder="Filtrar tamanho">
+                                    </th>
+                                    <th>
+                                        <input type="text" class="form-control form-control-sm" id="filter-lote" placeholder="Filtrar lote">
+                                    </th>
+                                    <th>
                                         <select class="form-control form-control-sm" id="filter-localizacao">
                                             <option value="">Todas</option>
                                         </select>
@@ -156,10 +183,29 @@ class MovimentacoesPage {
                                         </select>
                                     </th>
                                     <th>
-                                        <input type="text" class="form-control form-control-sm" id="filter-lote" placeholder="Filtrar lote">
+                                        <input type="date" class="form-control form-control-sm" id="filter-vencimento" placeholder="Vencimento">
                                     </th>
                                     <th>
-                                        <input type="date" class="form-control form-control-sm" id="filter-vencimento" placeholder="Vencimento">
+                                        <select class="form-control form-control-sm" id="filter-tipo-movimento">
+                                            <option value="">Todos</option>
+                                            <option value="Compra">Compra</option>
+                                            <option value="Venda">Venda</option>
+                                            <option value="Produção">Produção</option>
+                                            <option value="Transferência">Transferência</option>
+                                            <option value="Ajuste">Ajuste</option>
+                                            <option value="Perda">Perda</option>
+                                            <option value="Outro">Outro</option>
+                                        </select>
+                                    </th>
+                                    <th>
+                                        <select class="form-control form-control-sm" id="filter-lib">
+                                            <option value="">Todos</option>
+                                            <option value="Sim">Sim</option>
+                                            <option value="Não">Não</option>
+                                        </select>
+                                    </th>
+                                    <th>
+                                        <input type="text" class="form-control form-control-sm" id="filter-destino" placeholder="Filtrar destino">
                                     </th>
                                     <th>
                                         <input type="text" class="form-control form-control-sm" id="filter-observacoes" placeholder="Filtrar obs">
@@ -228,6 +274,20 @@ class MovimentacoesPage {
             const canEdit = this.canEditMovimentacao(mov);
             const hasEditPermission = authManager.hasPermission('editar');
             const isAdmin = authManager.isAdmin();
+            
+            // Debug: Log dos dados da movimentação
+            console.log('=== DEBUG MOVIMENTAÇÃO ===');
+            console.log('ID:', mov.id);
+            console.log('Lote:', mov.lote);
+            console.log('Projeto:', mov.projeto);
+            console.log('Variante:', mov.variante);
+            console.log('Tamanho:', mov.tamanho);
+            console.log('Tipo Movimento:', mov.tipo_movimento);
+            console.log('LIB:', mov.lib);
+            console.log('Destino:', mov.destino);
+            console.log('Data Vencimento:', mov.data_vencimento);
+            console.log('Observações:', mov.observacoes);
+            console.log('========================');
             
             return `
             <tr>
