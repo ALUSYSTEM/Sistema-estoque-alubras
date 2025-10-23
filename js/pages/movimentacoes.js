@@ -1462,6 +1462,11 @@ class MovimentacoesPage {
             const hLower = h.toLowerCase();
             console.log(`Analisando header [${index}]: "${h}"`);
             
+            // Debug específico para PROJETO
+            if (h === 'PROJETO' || hLower.includes('projeto')) {
+                console.log(`🎯 PROJETO detectado na coluna ${index}: "${h}"`);
+            }
+            
             // Mapeamento baseado nos nomes exatos da planilha original (14 colunas)
             // Coluna 0: DATA
             if ((h === 'DATA' || hLower.includes('data')) && map.data === undefined) {
@@ -1508,15 +1513,15 @@ class MovimentacoesPage {
                 map.tipo = index;
                 console.log(`ENTRADA/SAÍDA mapeado para coluna ${index}`);
             }
+            // Coluna 10: PROJETO - mapear primeiro para evitar conflitos
+            if ((h === 'PROJETO' || hLower.includes('projeto')) && map.projeto === undefined) {
+                map.projeto = index;
+                console.log(`🎯 PROJETO mapeado para coluna ${index}`);
+            }
             // Coluna 9: TIPO
             else if ((h === 'TIPO' || hLower.includes('tipo')) && map.tipoMovimento === undefined) {
                 map.tipoMovimento = index;
                 console.log(`TIPO mapeado para coluna ${index}`);
-            }
-            // Coluna 10: PROJETO
-            else if ((h === 'PROJETO' || hLower.includes('projeto')) && map.projeto === undefined) {
-                map.projeto = index;
-                console.log(`PROJETO mapeado para coluna ${index}`);
             }
             // Coluna 11: LOCALIZAÇÃO - ser mais específico para evitar conflitos
             else if ((h === 'LOCALIZAÇÃO' || h === 'LOCALIZACAO') && map.localizacao === undefined) {
@@ -1609,6 +1614,7 @@ class MovimentacoesPage {
         console.log('Headers completos:', headers);
         console.log(`Localização mapeada para coluna ${map.localizacao} (deve ser 11)`);
         console.log(`Data de vencimento mapeada para coluna ${map.dataVencimento} (deve ser 6)`);
+        console.log(`🎯 PROJETO mapeado na coluna: ${map.projeto} (deve ser 10)`);
         
         return map;
     }
@@ -1747,11 +1753,45 @@ class MovimentacoesPage {
 
             // Buscar projeto (opcional) usando o mapa
             let projeto = null;
+            console.log('=== DEBUG PROJETO ===');
+            console.log('columnMap.projeto:', columnMap.projeto);
+            console.log('row[columnMap.projeto]:', row[columnMap.projeto]);
+            console.log('projetoMap keys:', Array.from(projetoMap.keys()));
+            
             const projetoCodigo = row[columnMap.projeto];
             if (projetoCodigo && columnMap.projeto !== undefined) {
                 const projetoCodigoTrimmed = projetoCodigo.toString().trim();
+                console.log('Projeto código encontrado:', projetoCodigoTrimmed);
                 projeto = projetoMap.get(projetoCodigoTrimmed);
+                console.log('Projeto encontrado no mapa:', projeto);
+                
+                if (!projeto) {
+                    console.log('Projeto não encontrado no mapa, criando automaticamente...');
+                    // Criar projeto automaticamente se não existir
+                    const novoProjeto = {
+                        codigo: projetoCodigoTrimmed,
+                        descricao: projetoCodigoTrimmed,
+                        ativo: true,
+                        tipo: 'IMPORTADO',
+                        observacoes: 'Projeto criado automaticamente durante importação'
+                    };
+                    
+                    try {
+                        const projetoId = await databaseManager.addProjeto(novoProjeto);
+                        projeto = {
+                            id: projetoId,
+                            ...novoProjeto
+                        };
+                        projetoMap.set(projetoCodigoTrimmed, projeto);
+                        console.log(`Projeto "${projetoCodigoTrimmed}" criado com sucesso!`);
+                    } catch (error) {
+                        console.error(`Erro ao criar projeto "${projetoCodigoTrimmed}":`, error);
+                    }
+                }
+            } else {
+                console.log('Projeto não encontrado - coluna não mapeada ou vazia');
             }
+            console.log('========================');
 
             // Parsear data
             let data = new Date();
