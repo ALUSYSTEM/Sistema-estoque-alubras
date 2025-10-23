@@ -115,10 +115,15 @@ class MovimentacoesPage {
                                     <th style="min-width: 80px;">Tipo</th>
                                     <th style="min-width: 200px;">Produto</th>
                                     <th style="min-width: 100px;">Quantidade</th>
+                                    <th style="min-width: 120px;">Variante</th>
+                                    <th style="min-width: 100px;">Tamanho</th>
+                                    <th style="min-width: 100px;">Lote</th>
                                     <th style="min-width: 150px;">Localização</th>
                                     <th style="min-width: 150px;">Projeto</th>
-                                    <th style="min-width: 100px;">Lote</th>
                                     <th style="min-width: 120px;">Data Vencimento</th>
+                                    <th style="min-width: 120px;">Tipo Movimento</th>
+                                    <th style="min-width: 80px;">LIB</th>
+                                    <th style="min-width: 120px;">Destino</th>
                                     <th style="min-width: 150px;">Observações</th>
                                     <th style="min-width: 120px;">Usuário</th>
                                     <th style="min-width: 100px;">Ações</th>
@@ -209,7 +214,7 @@ class MovimentacoesPage {
             console.log('Nenhuma movimentação para renderizar');
             return `
                 <tr>
-                    <td colspan="11" class="text-center py-4">
+                    <td colspan="16" class="text-center py-4">
                         <i class="fas fa-exchange-alt fa-3x text-muted mb-3"></i>
                         <p class="text-muted">Nenhuma movimentação encontrada</p>
                     </td>
@@ -241,11 +246,22 @@ class MovimentacoesPage {
                         ${Utils.formatNumber(mov.quantidade || 0, 2)}
                     </span>
                 </td>
+                <td>${mov.variante || '-'}</td>
+                <td>${mov.tamanho || '-'}</td>
+                <td>${mov.lote || '-'}</td>
                 <td>${mov.localizacao?.codigo || '-'}</td>
                 <td>${mov.projeto?.codigo || '-'}</td>
-                <td>${mov.lote || '-'}</td>
                 <td>
                     ${mov.data_vencimento ? Utils.formatDate(mov.data_vencimento) : '-'}
+                </td>
+                <td>
+                    <span class="badge bg-info">${mov.tipo_movimento || '-'}</span>
+                </td>
+                <td>
+                    <span class="badge bg-${mov.lib === 'Sim' ? 'success' : 'secondary'}">${mov.lib || '-'}</span>
+                </td>
+                <td>
+                    <small>${mov.destino || '-'}</small>
                 </td>
                 <td>
                     <small>${mov.observacoes || '-'}</small>
@@ -1971,7 +1987,7 @@ class MovimentacoesPage {
         if (filteredMovimentacoes.length === 0) {
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="11" class="text-center py-4">
+                    <td colspan="16" class="text-center py-4">
                         <i class="fas fa-search fa-3x text-muted mb-3"></i>
                         <p class="text-muted">Nenhuma movimentação encontrada com os filtros aplicados</p>
                     </td>
