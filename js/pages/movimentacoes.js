@@ -47,6 +47,17 @@ class MovimentacoesPage {
             this.movimentacoes = await databaseManager.getMovimentacoes(this.currentFilters);
             console.log('Movimentações carregadas do banco:', this.movimentacoes.length);
             
+            // Debug específico para projetos
+            console.log('=== DEBUG PROJETOS NA CARGA ===');
+            this.movimentacoes.forEach((mov, index) => {
+                console.log(`Movimentação ${index + 1}:`);
+                console.log('  - ID:', mov.id);
+                console.log('  - Projeto ID:', mov.projeto_id);
+                console.log('  - Projeto objeto:', mov.projeto);
+                console.log('  - Projeto código:', mov.projeto?.codigo);
+            });
+            console.log('===============================');
+            
             // Log detalhado das movimentações para debug
             if (this.movimentacoes.length > 0) {
                 console.log('=== DEBUG CARREGAMENTO MOVIMENTAÇÕES ===');
@@ -130,19 +141,19 @@ class MovimentacoesPage {
                             <thead class="table-dark sticky-top">
                                 <tr>
                                     <th style="min-width: 120px;">Data</th>
-                                    <th style="min-width: 80px;">Tipo</th>
-                                    <th style="min-width: 200px;">Produto</th>
-                                    <th style="min-width: 100px;">Quantidade</th>
+                                    <th style="min-width: 150px;">Nome da Obra</th>
+                                    <th style="min-width: 200px;">Descrição</th>
                                     <th style="min-width: 120px;">Variante</th>
                                     <th style="min-width: 100px;">Tamanho</th>
                                     <th style="min-width: 100px;">Lote</th>
-                                    <th style="min-width: 150px;">Localização</th>
-                                    <th style="min-width: 150px;">Projeto</th>
                                     <th style="min-width: 120px;">Data Vencimento</th>
-                                    <th style="min-width: 120px;">Tipo Movimento</th>
+                                    <th style="min-width: 100px;">Quantidade</th>
+                                    <th style="min-width: 100px;">Entrada/Saída</th>
+                                    <th style="min-width: 120px;">Tipo</th>
+                                    <th style="min-width: 150px;">Projeto</th>
+                                    <th style="min-width: 150px;">Localização</th>
                                     <th style="min-width: 80px;">LIB</th>
                                     <th style="min-width: 120px;">Destino</th>
-                                    <th style="min-width: 150px;">Observações</th>
                                     <th style="min-width: 120px;">Usuário</th>
                                     <th style="min-width: 100px;">Ações</th>
                                 </tr>
@@ -151,17 +162,10 @@ class MovimentacoesPage {
                                         <input type="date" class="form-control form-control-sm" id="filter-data" placeholder="Filtrar data">
                                     </th>
                                     <th>
-                                        <select class="form-control form-control-sm" id="filter-tipo">
-                                            <option value="">Todos</option>
-                                            <option value="ENTRADA">Entrada</option>
-                                            <option value="SAIDA">Saída</option>
-                                        </select>
+                                        <input type="text" class="form-control form-control-sm" id="filter-codigo" placeholder="Filtrar nome da obra">
                                     </th>
                                     <th>
-                                        <input type="text" class="form-control form-control-sm" id="filter-produto" placeholder="Filtrar produto">
-                                    </th>
-                                    <th>
-                                        <input type="number" class="form-control form-control-sm" id="filter-quantidade" placeholder="Qtd">
+                                        <input type="text" class="form-control form-control-sm" id="filter-descricao" placeholder="Filtrar descrição">
                                     </th>
                                     <th>
                                         <input type="text" class="form-control form-control-sm" id="filter-variante" placeholder="Filtrar variante">
@@ -173,8 +177,23 @@ class MovimentacoesPage {
                                         <input type="text" class="form-control form-control-sm" id="filter-lote" placeholder="Filtrar lote">
                                     </th>
                                     <th>
-                                        <select class="form-control form-control-sm" id="filter-localizacao">
-                                            <option value="">Todas</option>
+                                        <input type="date" class="form-control form-control-sm" id="filter-vencimento" placeholder="Vencimento">
+                                    </th>
+                                    <th>
+                                        <input type="number" class="form-control form-control-sm" id="filter-quantidade" placeholder="Qtd">
+                                    </th>
+                                    <th>
+                                        <select class="form-control form-control-sm" id="filter-tipo">
+                                            <option value="">Todos</option>
+                                            <option value="ENTRADA">Entrada</option>
+                                            <option value="SAIDA">Saída</option>
+                                        </select>
+                                    </th>
+                                    <th>
+                                        <select class="form-control form-control-sm" id="filter-tipo-movimento">
+                                            <option value="">Todos</option>
+                                            <option value="LIBERAÇÃO">Liberação</option>
+                                            <option value="CONTAGEM">Contagem</option>
                                         </select>
                                     </th>
                                     <th>
@@ -183,32 +202,23 @@ class MovimentacoesPage {
                                         </select>
                                     </th>
                                     <th>
-                                        <input type="date" class="form-control form-control-sm" id="filter-vencimento" placeholder="Vencimento">
-                                    </th>
-                                    <th>
-                                        <select class="form-control form-control-sm" id="filter-tipo-movimento">
-                                            <option value="">Todos</option>
-                                            <option value="Compra">Compra</option>
-                                            <option value="Venda">Venda</option>
-                                            <option value="Produção">Produção</option>
-                                            <option value="Transferência">Transferência</option>
-                                            <option value="Ajuste">Ajuste</option>
-                                            <option value="Perda">Perda</option>
-                                            <option value="Outro">Outro</option>
+                                        <select class="form-control form-control-sm" id="filter-localizacao">
+                                            <option value="">Todas</option>
                                         </select>
                                     </th>
                                     <th>
                                         <select class="form-control form-control-sm" id="filter-lib">
                                             <option value="">Todos</option>
-                                            <option value="Sim">Sim</option>
-                                            <option value="Não">Não</option>
+                                            <option value="LIB 6">LIB 6</option>
+                                            <option value="LIB 15">LIB 15</option>
                                         </select>
                                     </th>
                                     <th>
-                                        <input type="text" class="form-control form-control-sm" id="filter-destino" placeholder="Filtrar destino">
-                                    </th>
-                                    <th>
-                                        <input type="text" class="form-control form-control-sm" id="filter-observacoes" placeholder="Filtrar obs">
+                                        <select class="form-control form-control-sm" id="filter-destino">
+                                            <option value="">Todos</option>
+                                            <option value="PRODUÇÃO">Produção</option>
+                                            <option value="ESTOQUE">Estoque</option>
+                                        </select>
                                     </th>
                                     <th>
                                         <input type="text" class="form-control form-control-sm" id="filter-usuario" placeholder="Filtrar usuário">
@@ -293,38 +303,40 @@ class MovimentacoesPage {
             <tr>
                 <td>${Utils.formatDate(mov.data, true)}</td>
                 <td>
-                    <span class="badge bg-${mov.entrada_saida === 'ENTRADA' ? 'success' : 'danger'}">
-                        ${mov.entrada_saida === 'ENTRADA' ? 'Entrada' : 'Saída'}
-                    </span>
+                    <strong>${mov.produto?.codigo || 'N/A'}</strong>
                 </td>
                 <td>
-                    <strong>${mov.produto?.codigo || 'N/A'}</strong><br>
                     <small>${mov.produto?.descricao || 'N/A'}</small>
+                </td>
+                <td>${mov.variante || '-'}</td>
+                <td>${mov.tamanho || '-'}</td>
+                <td>${mov.lote || '-'}</td>
+                <td>
+                    ${mov.data_vencimento ? Utils.formatDate(mov.data_vencimento) : '-'}
                 </td>
                 <td>
                     <span class="badge bg-primary">
                         ${Utils.formatNumber(mov.quantidade || 0, 2)}
                     </span>
                 </td>
-                <td>${mov.variante || '-'}</td>
-                <td>${mov.tamanho || '-'}</td>
-                <td>${mov.lote || '-'}</td>
-                <td>${mov.localizacao?.codigo || '-'}</td>
-                <td>${mov.projeto?.codigo || '-'}</td>
                 <td>
-                    ${mov.data_vencimento ? Utils.formatDate(mov.data_vencimento) : '-'}
+                    <span class="badge bg-${mov.entrada_saida === 'ENTRADA' ? 'success' : 'danger'}">
+                        ${mov.entrada_saida === 'ENTRADA' ? 'Entrada' : 'Saída'}
+                    </span>
                 </td>
                 <td>
                     <span class="badge bg-info">${mov.tipo_movimento || '-'}</span>
                 </td>
                 <td>
-                    <span class="badge bg-${mov.lib === 'Sim' ? 'success' : 'secondary'}">${mov.lib || '-'}</span>
+                    ${mov.projeto ? mov.projeto.descricao || mov.projeto.codigo : '-'}
+                    ${mov.projeto ? ` (ID: ${mov.projeto.id})` : ' (SEM PROJETO)'}
+                </td>
+                <td>${mov.localizacao?.codigo || '-'}</td>
+                <td>
+                    <span class="badge bg-secondary">${mov.lib || '-'}</span>
                 </td>
                 <td>
                     <small>${mov.destino || '-'}</small>
-                </td>
-                <td>
-                    <small>${mov.observacoes || '-'}</small>
                 </td>
                 <td>
                     <small>${mov.usuario_nome || 'Sistema'}</small>
@@ -1770,7 +1782,7 @@ class MovimentacoesPage {
                     // Criar projeto automaticamente se não existir
                     const novoProjeto = {
                         codigo: projetoCodigoTrimmed,
-                        descricao: projetoCodigoTrimmed,
+                        descricao: projetoCodigoTrimmed, // O nome completo do projeto
                         ativo: true,
                         tipo: 'IMPORTADO',
                         observacoes: 'Projeto criado automaticamente durante importação'
