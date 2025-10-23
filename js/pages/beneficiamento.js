@@ -871,14 +871,40 @@ class BeneficiamentoPage {
 
             Utils.showMessage('Beneficiamento enviado para Movimentação com sucesso!', 'success');
             
-            // Fechar modal
-            const modal = document.querySelector('.modal');
-            if (modal) {
-                const modalInstance = bootstrap.Modal.getInstance(modal);
-                if (modalInstance) {
-                    modalInstance.hide();
+            // Fechar modal de forma mais robusta
+            setTimeout(() => {
+                // Tentar múltiplas formas de fechar o modal
+                const modal = document.querySelector('.modal');
+                if (modal) {
+                    // Método 1: Bootstrap Modal instance
+                    const modalInstance = bootstrap.Modal.getInstance(modal);
+                    if (modalInstance) {
+                        modalInstance.hide();
+                    } else {
+                        // Método 2: Criar nova instância e fechar
+                        const newModalInstance = new bootstrap.Modal(modal);
+                        newModalInstance.hide();
+                    }
                 }
-            }
+                
+                // Método 3: Remover backdrop e modal manualmente
+                const backdrop = document.querySelector('.modal-backdrop');
+                if (backdrop) {
+                    backdrop.remove();
+                }
+                
+                // Método 4: Remover classes do body
+                document.body.classList.remove('modal-open');
+                document.body.style.overflow = '';
+                document.body.style.paddingRight = '';
+                
+                // Método 5: Esconder modal diretamente
+                const modalElement = document.querySelector('.modal');
+                if (modalElement) {
+                    modalElement.style.display = 'none';
+                    modalElement.classList.remove('show');
+                }
+            }, 100);
 
             // Recarregar dados
             await this.loadBeneficiamentos();
