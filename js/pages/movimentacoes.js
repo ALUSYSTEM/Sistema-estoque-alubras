@@ -1835,6 +1835,9 @@ class MovimentacoesPage {
                 variante: row[columnMap.variante] ? row[columnMap.variante].toString().trim() : null,
                 tamanho: row[columnMap.tamanho] ? row[columnMap.tamanho].toString().trim() : null,
                 data_vencimento: dataVencimento,
+                tipo_movimento: row[columnMap.tipoMovimento] ? row[columnMap.tipoMovimento].toString().trim() : null,
+                lib: row[columnMap.lib] ? row[columnMap.lib].toString().trim() : null,
+                destino: row[columnMap.destino] ? row[columnMap.destino].toString().trim() : null,
                 observacoes: row[columnMap.observacoes] ? row[columnMap.observacoes].toString().trim() : null,
                 usuario_nome: window.currentUserData ? window.currentUserData.nome : 'Sistema'
             };
