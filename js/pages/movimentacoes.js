@@ -681,65 +681,58 @@ class MovimentacoesPage {
 
         Utils.showModal(title, content, actions);
 
-        // Após abrir a modal, carregar opções de variantes do produto selecionado
+        // Após abrir a modal, carregar TODAS as variantes cadastradas no sistema
         try {
-            const produtoSelect = document.getElementById('produto_id');
             const varianteSelect = document.getElementById('variante');
-
-            const loadVariantes = async (produtoId, currentValue) => {
-                if (!produtoId || !varianteSelect) return;
-                // Buscar itens de estoque para obter variantes existentes para este produto
+            
+            if (varianteSelect) {
+                // Buscar TODAS as variantes do sistema (de todos os produtos)
                 let variantes = [];
+                
                 try {
-                    const itensEstoque = await databaseManager.getEstoque({ produto_id: produtoId });
-                    variantes = Array.from(new Set(
+                    // Buscar do estoque
+                    const itensEstoque = await databaseManager.getEstoque();
+                    const variantesEstoque = Array.from(new Set(
                         (itensEstoque || [])
                             .map(e => (e.variante || '').toString().trim())
                             .filter(v => v && v !== 'null' && v !== 'undefined')
                     ));
+                    variantes.push(...variantesEstoque);
                 } catch (err) {
                     console.warn('Falha ao carregar variantes do estoque:', err);
                 }
 
-                // Se não encontrou no estoque, tentar inspecionar movimentações carregadas em memória
-                if (variantes.length === 0 && this.movimentacoes && this.movimentacoes.length > 0) {
-                    variantes = Array.from(new Set(
+                // Também buscar das movimentações em memória
+                if (this.movimentacoes && this.movimentacoes.length > 0) {
+                    const variantesMovs = Array.from(new Set(
                         this.movimentacoes
-                            .filter(m => m.produto_id === produtoId)
                             .map(m => (m.variante || '').toString().trim())
-                            .filter(v => v)
+                            .filter(v => v && v !== 'null' && v !== 'undefined')
                     ));
+                    variantes.push(...variantesMovs);
                 }
 
-                // Montar opções
-                const current = (currentValue || (movimentacao ? movimentacao.variante : '')) || '';
+                // Remover duplicatas e ordenar
+                variantes = Array.from(new Set(variantes)).sort();
+
+                console.log('Variantes disponíveis no sistema:', variantes);
+
+                // Montar opções do select
+                const currentValue = movimentacao ? movimentacao.variante : '';
                 const optionsHtml = [
                     '<option value="">Selecione...</option>',
-                    ...variantes.sort().map(v => `<option value="${v}">${v}</option>`)
+                    ...variantes.map(v => `<option value="${v}" ${v === currentValue ? 'selected' : ''}>${v}</option>`)
                 ];
 
-                // Garantir que o valor atual apareça e fique selecionado
-                if (current && !variantes.includes(current)) {
-                    optionsHtml.push(`<option value="${current}" selected>${current}</option>`);
+                // Se a movimentação tem uma variante que não está na lista, adicionar
+                if (currentValue && !variantes.includes(currentValue)) {
+                    optionsHtml.push(`<option value="${currentValue}" selected>${currentValue}</option>`);
                 }
 
                 varianteSelect.innerHTML = optionsHtml.join('');
-                if (current) {
-                    varianteSelect.value = current;
-                }
-            };
-
-            // Carregar inicialmente
-            await loadVariantes(document.getElementById('produto_id')?.value, movimentacao?.variante);
-
-            // Recarregar quando o produto mudar
-            if (produtoSelect) {
-                produtoSelect.addEventListener('change', async (e) => {
-                    await loadVariantes(e.target.value, '');
-                });
             }
         } catch (err) {
-            console.error('Erro ao preparar opções de variante:', err);
+            console.error('Erro ao carregar variantes:', err);
         }
     }
 
