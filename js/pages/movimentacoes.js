@@ -1870,17 +1870,33 @@ class MovimentacoesPage {
             if (columnMap.data !== undefined && row[columnMap.data]) {
                 const dataValue = row[columnMap.data];
                 if (dataValue) {
-                    // Tentar diferentes formatos de data
                     if (typeof dataValue === 'number') {
-                        // Excel serial date
-                        data = new Date((dataValue - 25569) * 86400 * 1000);
+                        // Excel serial date → base 1899-12-30, fixar 12:00 local para evitar fuso
+                        const base = new Date(1899, 11, 30);
+                        data = new Date(base.getFullYear(), base.getMonth(), base.getDate() + dataValue, 12, 0, 0, 0);
+                    } else if (dataValue instanceof Date) {
+                        data = new Date(dataValue.getFullYear(), dataValue.getMonth(), dataValue.getDate(), 12, 0, 0, 0);
                     } else {
-                        data = new Date(dataValue);
-                    }
-                    
-                    if (isNaN(data.getTime())) {
-                        data = new Date();
-                        console.warn('Data inválida, usando data atual');
+                        // String: tentar dd/mm/yyyy ou dd-mm-yyyy
+                        const s = dataValue.toString().trim();
+                        const m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+                        if (m) {
+                            const day = parseInt(m[1], 10);
+                            const month = parseInt(m[2], 10) - 1;
+                            const year = parseInt(m[3].length === 2 ? ('20' + m[3]) : m[3], 10);
+                            data = new Date(year, month, day, 12, 0, 0, 0);
+                        } else {
+                            // Fallback: tentar constructor e depois fixar 12:00
+                            const tmp = new Date(s);
+                            if (!isNaN(tmp.getTime())) {
+                                data = new Date(tmp.getFullYear(), tmp.getMonth(), tmp.getDate(), 12, 0, 0, 0);
+                            } else {
+                                // Último recurso: hoje às 12:00
+                                const now = new Date();
+                                data = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0, 0, 0);
+                                console.warn('Data inválida, usando data atual');
+                            }
+                        }
                     }
                 }
             }
@@ -1905,19 +1921,28 @@ class MovimentacoesPage {
                 const dataVencimentoRaw = row[columnMap.dataVencimento];
                 if (dataVencimentoRaw && dataVencimentoRaw.toString().trim() !== '') {
                     try {
-                        // Tentar diferentes formatos de data
                         if (typeof dataVencimentoRaw === 'number') {
-                            // Excel serial date
-                            dataVencimento = new Date((dataVencimentoRaw - 25569) * 86400 * 1000);
+                            const base = new Date(1899, 11, 30);
+                            dataVencimento = new Date(base.getFullYear(), base.getMonth(), base.getDate() + dataVencimentoRaw, 12, 0, 0, 0);
+                        } else if (dataVencimentoRaw instanceof Date) {
+                            dataVencimento = new Date(dataVencimentoRaw.getFullYear(), dataVencimentoRaw.getMonth(), dataVencimentoRaw.getDate(), 12, 0, 0, 0);
                         } else {
-                            dataVencimento = new Date(dataVencimentoRaw);
-                        }
-                        
-                        if (isNaN(dataVencimento.getTime())) {
-                            console.warn('Data de vencimento inválida, ignorando:', dataVencimentoRaw);
-                            dataVencimento = null;
-                        } else {
-                            console.log('Data de vencimento parseada:', dataVencimento);
+                            const s = dataVencimentoRaw.toString().trim();
+                            const m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+                            if (m) {
+                                const day = parseInt(m[1], 10);
+                                const month = parseInt(m[2], 10) - 1;
+                                const year = parseInt(m[3].length === 2 ? ('20' + m[3]) : m[3], 10);
+                                dataVencimento = new Date(year, month, day, 12, 0, 0, 0);
+                            } else {
+                                const tmp = new Date(s);
+                                if (!isNaN(tmp.getTime())) {
+                                    dataVencimento = new Date(tmp.getFullYear(), tmp.getMonth(), tmp.getDate(), 12, 0, 0, 0);
+                                } else {
+                                    dataVencimento = null;
+                                    console.warn('Data de vencimento inválida, ignorando:', dataVencimentoRaw);
+                                }
+                            }
                         }
                     } catch (error) {
                         console.warn('Erro ao parsear data de vencimento:', error, dataVencimentoRaw);
