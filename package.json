@@ -1,0 +1,9 @@
+{
+  "name": "sistema-qualidade-alubras",
+  "version": "1.0.0",
+  "description": "Sistema de Controle de Qualidade - Alubras",
+  "homepage": "https://SEU_USUARIO.github.io/sistema-qualidade-alubras",
+  "scripts": {
+    "deploy": "gh-pages -d ."
+  }
+}
